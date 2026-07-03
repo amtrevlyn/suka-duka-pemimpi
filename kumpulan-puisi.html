@@ -1,0 +1,2369 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=Lora:ital,wght@0,400;0,500;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #F1E9D8;
+    --paper-card: #E9DFC7;
+    --paper-card-hover: #E3D7BA;
+    --ink: #2B2320;
+    --ink-soft: #57493f;
+    --wine: #7B2D26;
+    --wine-dark: #5f221c;
+    --gold: #A9823F;
+    --rule: rgba(43, 35, 32, 0.14);
+    --shadow: rgba(43, 35, 32, 0.18);
+  }
+
+  #puisi-root[data-theme="dark"] {
+    --paper: #1B140F;
+    --paper-card: #241C15;
+    --paper-card-hover: #2D231A;
+    --ink: #EDE3D0;
+    --ink-soft: #B7A98F;
+    --wine: #E0917E;
+    --wine-dark: #EFAA99;
+    --gold: #D4AF6A;
+    --rule: rgba(237, 227, 208, 0.14);
+    --shadow: rgba(0, 0, 0, 0.45);
+  }
+  #puisi-root[data-theme="dark"] .btn-tulis,
+  #puisi-root[data-theme="dark"] .btn-simpan { color: #1B140F; }
+  #puisi-root[data-theme="dark"] .filter-pill.active { color: #1B140F; }
+  #puisi-root { transition: background 0.25s ease, color 0.25s ease; }
+  .card, .toc, .sheet, .filter-pill, .tag-pill { transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.15s ease, transform 0.15s ease; }
+
+  #puisi-root {
+    background: var(--paper);
+    background-image:
+      radial-gradient(ellipse at top left, rgba(123,45,38,0.05), transparent 45%),
+      radial-gradient(ellipse at bottom right, rgba(169,130,63,0.06), transparent 50%);
+    color: var(--ink);
+    font-family: 'Lora', serif;
+    min-height: 100vh;
+    padding: 48px 24px 80px;
+    box-sizing: border-box;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  #puisi-root * { box-sizing: border-box; }
+
+  .wrap { max-width: 880px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .starfield {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    overflow: hidden;
+  }
+  #puisi-root[data-theme="dark"] .starfield { opacity: 1; }
+  .bg-star {
+    position: absolute;
+    background: #F1E9D8;
+    border-radius: 50%;
+    animation-name: twinkle;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bg-star { animation: none; opacity: 0.6; }
+  }
+  .bg-moon-glow {
+    position: fixed;
+    top: -130px;
+    right: -110px;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,106,0.20), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .bg-shoot {
+    position: fixed;
+    width: 70px;
+    height: 1.5px;
+    background: linear-gradient(90deg, rgba(241,233,208,0.95), transparent);
+    border-radius: 2px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+    animation: bgShoot 8s linear infinite;
+  }
+  @keyframes bgShoot {
+    0%, 90% { opacity: 0; transform: translate(0,0) rotate(24deg); }
+    91% { opacity: 1; }
+    98% { opacity: 0; transform: translate(240px, 100px) rotate(24deg); }
+    100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bg-shoot { animation: none; opacity: 0; }
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--wine);
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 22px;
+    height: 1px;
+    background: var(--gold);
+    display: inline-block;
+  }
+
+  header.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 20px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(32px, 5vw, 48px);
+    margin: 0;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+
+  .byline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--wine);
+    margin: 8px 0 0;
+  }
+  .byline::before { content: '— '; color: var(--gold); }
+
+  .count-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  .live-clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    opacity: 0.75;
+    margin-top: 4px;
+  }
+
+  .btn-icon.active {
+    border-color: var(--wine);
+    color: var(--wine);
+    background: color-mix(in srgb, var(--wine) 10%, transparent);
+  }
+
+  .read-viewer-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    opacity: 0.7;
+  }
+
+  .btn-tulis {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    background: var(--wine);
+    color: var(--paper);
+    border: none;
+    padding: 13px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+  }
+  .btn-tulis:hover { background: var(--wine-dark); transform: translateY(-1px); }
+  .btn-tulis:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn-icon {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    padding: 12px 13px;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-icon:hover { border-color: var(--gold); color: var(--ink); }
+  .btn-theme {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    padding: 12px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-theme:hover { border-color: var(--gold); color: var(--ink); }
+
+  .hero {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 0 0 40px;
+    background: linear-gradient(180deg, #0a1330 0%, #14204a 55%, #212f5c 100%);
+  }
+  .hero-svg { display: block; width: 100%; height: auto; }
+  .hero-star { animation: twinkle 3.6s ease-in-out infinite; }
+  .hero-star:nth-child(3n) { animation-duration: 4.4s; animation-delay: 0.6s; }
+  .hero-star:nth-child(5n) { animation-duration: 5.2s; animation-delay: 1.2s; }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
+  .moon-float {
+    animation: moonFloat 6s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @keyframes moonFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  .shooting-star {
+    opacity: 0;
+    animation: shoot 9s ease-in infinite;
+    animation-delay: 2s;
+  }
+  @keyframes shoot {
+    0%, 68% { opacity: 0; transform: translate(60px, 6px); }
+    70% { opacity: 1; }
+    84% { opacity: 0.9; transform: translate(660px, 165px); }
+    86%, 100% { opacity: 0; transform: translate(660px, 165px); }
+  }
+  .hero-quote-wrap {
+    position: absolute;
+    left: 0; right: 0; top: 30px;
+    text-align: center;
+    padding: 0 30px;
+  }
+  .hero-quote-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #B08D57;
+    margin: 0 0 12px;
+  }
+  .hero-quote {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(14px, 2.3vw, 19px);
+    color: #F1E9D8;
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-star { animation: none; }
+  }
+
+  /* Tag pills */
+  .tag-pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--wine);
+    background: color-mix(in srgb, var(--wine) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--wine) 30%, transparent);
+    padding: 3px 9px;
+    border-radius: 10px;
+    margin: 0 5px 5px 0;
+  }
+  .tag-row { margin-bottom: 10px; }
+
+  .mood-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--mood-color, var(--gold));
+    margin-bottom: 10px;
+  }
+
+  .read-mood {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--mood-color, var(--gold));
+    background: color-mix(in srgb, var(--mood-color, var(--gold)) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--mood-color, var(--gold)) 35%, transparent);
+    padding: 4px 11px;
+    border-radius: 11px;
+    margin-bottom: 20px;
+  }
+
+  .btn-music {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--mood-color, var(--gold));
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--mood-color, var(--gold)) 40%, transparent);
+    padding: 4px 12px;
+    border-radius: 11px;
+    margin: 0 0 20px 8px;
+    cursor: pointer;
+  }
+  .btn-music:hover { background: color-mix(in srgb, var(--mood-color, var(--gold)) 14%, transparent); }
+  .btn-music.playing { background: var(--mood-color, var(--gold)); color: var(--paper); }
+  .btn-music .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+  }
+  .btn-music.playing .dot { animation: musicPulse 1.1s ease-in-out infinite; }
+  @keyframes musicPulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.6); opacity: 1; }
+  }
+
+  .mood-select-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0 0;
+  }
+  select.mood-select {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    padding: 8px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .btn-ai-mood {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: none;
+    border: 1px dashed var(--gold);
+    color: var(--gold);
+    padding: 8px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-ai-mood:hover { background: var(--gold); color: var(--paper); }
+  .btn-ai-mood:disabled { opacity: 0.6; cursor: wait; }
+
+  /* Featured: Puisi Hari Ini */
+  .featured {
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    padding: 26px 28px;
+    margin-bottom: 34px;
+    border: 1px solid var(--rule);
+    background: linear-gradient(155deg, color-mix(in srgb, var(--mood-color, var(--gold)) 13%, var(--paper-card)), var(--paper-card) 70%);
+    border-top: 3px solid var(--mood-color, var(--gold));
+  }
+  .featured-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--mood-color, var(--gold));
+    margin: 0 0 12px;
+  }
+  .featured-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 26px;
+    margin: 0 0 10px;
+    line-height: 1.25;
+  }
+  .featured-preview {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    font-style: italic;
+    line-height: 1.7;
+    white-space: pre-line;
+    max-width: 560px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0 0 18px;
+  }
+  .featured-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: none;
+    border: 1px solid var(--mood-color, var(--gold));
+    color: var(--mood-color, var(--gold));
+    padding: 9px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .featured-btn:hover { background: var(--mood-color, var(--gold)); color: var(--paper); }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .stat-chip {
+    flex: 1;
+    min-width: 140px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 12px 16px;
+    background: color-mix(in srgb, var(--paper-card) 45%, transparent);
+  }
+  .stat-value {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 19px;
+    line-height: 1.2;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  /* Mood donut chart */
+  .mood-donut-card {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    flex-wrap: wrap;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 22px;
+    background: color-mix(in srgb, var(--paper-card) 40%, transparent);
+  }
+  .donut-svg {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+  }
+  .donut-seg {
+    transition: stroke-dasharray 0.6s cubic-bezier(0.16, 0.8, 0.3, 1);
+    animation: donutGrow 0.9s cubic-bezier(0.16, 0.8, 0.3, 1) both;
+  }
+  @keyframes donutGrow {
+    from { stroke-dasharray: 0 999; }
+  }
+  .donut-center-num {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 22px;
+    fill: var(--ink);
+  }
+  .donut-center-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    letter-spacing: 0.1em;
+    fill: var(--ink-soft);
+  }
+  .donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex: 1;
+    min-width: 160px;
+  }
+  .donut-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .donut-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .donut-legend-label { flex: 1; }
+  .donut-legend-pct { color: var(--ink-soft); }
+  @media (prefers-reduced-motion: reduce) {
+    .donut-seg { animation: none; }
+  }
+
+  /* Search */
+  .search-row {
+    margin-bottom: 18px;
+  }
+  input.search-input {
+    width: 100%;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 15px;
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    padding: 12px 16px;
+    border-radius: 4px;
+  }
+  input.search-input:focus { outline: none; border-color: var(--gold); }
+  input.search-input::placeholder { color: var(--ink-soft); opacity: 0.7; }
+
+  .toc {
+    margin-bottom: 30px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 6px 22px;
+    background: color-mix(in srgb, var(--paper-card) 55%, transparent);
+  }
+  .toc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--wine);
+    margin: 0;
+  }
+  .toc-toggle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .toc-list {
+    list-style: none;
+    margin: 0;
+    padding: 2px 0 16px;
+  }
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px dotted var(--rule);
+    cursor: pointer;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+  }
+  .toc-item:first-child { border-top: none; }
+  .toc-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    flex-shrink: 0;
+    width: 24px;
+  }
+  .toc-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 15px;
+    flex: 1;
+  }
+  .toc-item:hover .toc-title { color: var(--wine); }
+  .toc-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+  .toc-item:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .filter-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    padding: 6px 13px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .filter-pill:hover { border-color: var(--gold); color: var(--ink); }
+  .filter-pill.active { background: var(--wine); border-color: var(--wine); color: var(--paper); }
+
+  .card-updated {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-soft);
+    opacity: 0.65;
+    margin-top: 2px;
+    text-align: right;
+  }
+
+  input.tag-input {
+    width: 100%;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink);
+    padding: 6px 0 8px;
+  }
+  input.tag-input:focus { outline: none; border-bottom-color: var(--wine); }
+  input.tag-input::placeholder { color: #a89a86; }
+
+  @keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card-anim {
+    animation: cardFadeIn 0.5s cubic-bezier(0.16, 0.8, 0.3, 1) both;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 22px;
+  }
+
+  .card {
+    background: linear-gradient(165deg, color-mix(in srgb, var(--mood-color, var(--gold)) 9%, var(--paper-card)), var(--paper-card) 65%);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    border-top: 3px solid var(--mood-color, var(--gold));
+    padding: 22px 20px 18px;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 1px 0 var(--shadow);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 190px;
+  }
+  .card:nth-child(3n+1) { transform: rotate(-0.6deg); }
+  .card:nth-child(3n+2) { transform: rotate(0.4deg); }
+  .card:nth-child(3n+3) { transform: rotate(-0.2deg); }
+  .card:hover {
+    background: linear-gradient(165deg, color-mix(in srgb, var(--mood-color, var(--gold)) 16%, var(--paper-card-hover)), var(--paper-card-hover));
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--mood-color, var(--gold)) 22%, var(--shadow));
+    transform: translateY(-3px) rotate(0deg);
+  }
+  .card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .card-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-size: 19px;
+    line-height: 1.3;
+    margin: 0 0 10px;
+  }
+
+  .card-preview {
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    white-space: pre-line;
+    flex: 1;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+  }
+
+  .card-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    text-align: right;
+    opacity: 0.7;
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 90px 20px;
+    border: 1px dashed var(--rule);
+    border-radius: 4px;
+  }
+  .empty p.lead {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 22px;
+    margin: 0 0 8px;
+  }
+  .empty p.sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 0 0 26px;
+  }
+
+  .loading-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 40px 0;
+    text-align: center;
+  }
+
+  .error-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--wine);
+    background: color-mix(in srgb, var(--wine) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--wine) 30%, transparent);
+    padding: 12px 16px;
+    border-radius: 3px;
+    margin-bottom: 20px;
+  }
+
+  /* Overlay (form + reading) */
+  @keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes overlayFadeOut { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes sheetIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes sheetOut {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(8px) scale(0.98); }
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 22, 18, 0.45);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 20px;
+    overflow-y: auto;
+    z-index: 50;
+    backdrop-filter: blur(1px);
+    animation: overlayFadeIn 0.2s ease both;
+  }
+  .overlay.closing { animation: overlayFadeOut 0.16s ease both; }
+
+  .sheet {
+    background: var(--paper);
+    width: 100%;
+    max-width: 640px;
+    border-radius: 3px;
+    padding: 40px 44px 36px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 30px,
+      var(--rule) 31px
+    );
+    animation: sheetIn 0.32s cubic-bezier(0.16, 0.8, 0.3, 1) both;
+  }
+  .overlay.closing .sheet { animation: sheetOut 0.16s ease both; }
+
+  .mood-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: -1;
+  }
+  .mp {
+    position: absolute;
+    opacity: 0;
+    background: var(--color);
+  }
+  .mp-fall {
+    width: 2px;
+    height: calc(var(--size) * 5);
+    border-radius: 2px;
+    animation-name: particleFall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  .mp-rise {
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--color);
+    animation-name: particleRise;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  .mp-sparkle {
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    animation-name: particleSparkleMove;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  .mp-drift {
+    width: var(--size);
+    height: calc(var(--size) * 0.65);
+    border-radius: 50% 50% 50% 0;
+    animation-name: particleDrift;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  @keyframes particleFall {
+    0% { transform: translateY(-24px); opacity: 0; }
+    12% { opacity: 0.45; }
+    88% { opacity: 0.45; }
+    100% { transform: translateY(480px) translateX(var(--drift)); opacity: 0; }
+  }
+  @keyframes particleRise {
+    0% { transform: translateY(24px); opacity: 0; }
+    12% { opacity: 0.75; }
+    88% { opacity: 0.75; }
+    100% { transform: translateY(-480px) translateX(var(--drift)); opacity: 0; }
+  }
+  @keyframes particleSparkleMove {
+    0%, 100% { opacity: 0.15; transform: scale(0.6) translateY(0); }
+    50% { opacity: 0.9; transform: scale(1.3) translateY(-8px); }
+  }
+  @keyframes particleDrift {
+    0% { transform: translate(0, -10px) rotate(0deg); opacity: 0; }
+    12% { opacity: 0.55; }
+    88% { opacity: 0.55; }
+    100% { transform: translate(var(--driftx), var(--drifty)) rotate(35deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mp { animation: none; opacity: 0; }
+  }
+
+  .read-nav {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .nav-arrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-arrow:hover:not(:disabled) { border-color: var(--wine); color: var(--wine); }
+  .nav-arrow:disabled { opacity: 0.3; cursor: default; }
+  .nav-position {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    opacity: 0.75;
+  }
+
+  .read-controls {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .fs-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 0 20px 4px;
+    border: 1px solid var(--rule);
+    border-radius: 11px;
+    padding: 3px 4px;
+  }
+  .fs-label {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 11px;
+    color: var(--ink-soft);
+    padding: 0 4px;
+  }
+  .fs-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .fs-btn:hover { background: var(--rule); color: var(--ink); }
+
+  .sheet-close {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 6px 8px;
+  }
+  .sheet-close:hover { color: var(--wine); }
+
+  .field-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin: 22px 0 8px;
+  }
+  .field-label:first-of-type { margin-top: 4px; }
+
+  input.title-input {
+    width: 100%;
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: 26px;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  input.title-input:focus { outline: none; border-bottom-color: var(--wine); }
+  input.title-input::placeholder { color: #a89a86; font-style: italic; }
+
+  textarea.body-input {
+    width: 100%;
+    font-family: 'Lora', serif;
+    font-size: 16px;
+    line-height: 31px;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    resize: vertical;
+    min-height: 280px;
+    padding: 0;
+  }
+  textarea.body-input:focus { outline: none; }
+  textarea.body-input::placeholder { color: #a89a86; }
+
+  .sheet-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .btn-simpan {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: var(--wine);
+    color: var(--paper);
+    border: none;
+    padding: 12px 22px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .btn-simpan:hover { background: var(--wine-dark); }
+  .btn-simpan:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-hapus {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    padding: 11px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .btn-hapus:hover { color: var(--wine); border-color: var(--wine); }
+
+  /* Reading view */
+  .read-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+  }
+  .read-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-style: italic;
+    font-size: 30px;
+    margin: 0 0 6px;
+    line-height: 1.2;
+  }
+  .read-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 26px;
+  }
+  .read-body {
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    line-height: 31px;
+    white-space: pre-line;
+    color: var(--ink);
+  }
+  .read-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+  .btn-edit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: none;
+    border: 1px solid var(--wine);
+    color: var(--wine);
+    padding: 10px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .btn-edit:hover { background: var(--wine); color: var(--paper); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .btn-tulis, .card-anim, .overlay, .sheet, .overlay.closing, .overlay.closing .sheet, .moon-float, .shooting-star, .hero-star {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+
+  .draft-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: color-mix(in srgb, var(--gold) 14%, transparent);
+    border: 1px dashed var(--gold);
+    border-radius: 3px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink);
+  }
+  .draft-banner-actions { display: flex; gap: 8px; }
+  .draft-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: none;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .draft-btn:hover { background: var(--gold); color: var(--paper); }
+  .draft-btn.subtle { border-color: var(--rule); color: var(--ink-soft); }
+  .draft-btn.subtle:hover { background: var(--rule); color: var(--ink); }
+
+  #print-poems { display: none; }
+  @media print {
+    .starfield, .hero, header.top, #featured-slot, #error-slot, .toc, .filter-bar, .search-row, .stats-bar, .grid, .overlay {
+      display: none !important;
+    }
+    #puisi-root { padding: 0; background: #fff; }
+    #print-poems {
+      display: block !important;
+      color: #1a1a1a;
+      font-family: 'Lora', serif;
+    }
+    .print-book-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 30px;
+      margin-bottom: 4px;
+    }
+    .print-book-byline {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 40px;
+    }
+    .print-poem {
+      page-break-after: always;
+      padding-top: 20px;
+    }
+    .print-poem:last-child { page-break-after: auto; }
+    .print-poem-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #8a6a2a;
+      margin-bottom: 8px;
+    }
+    .print-poem-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 24px;
+      margin: 0 0 6px;
+    }
+    .print-poem-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #666;
+      margin-bottom: 18px;
+    }
+    .print-poem-body {
+      font-size: 14px;
+      line-height: 1.9;
+      white-space: pre-line;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .sheet { padding: 30px 22px 26px; }
+    #puisi-root { padding: 32px 14px 60px; }
+  }
+</style>
+
+<div id="puisi-root">
+  <div class="starfield" id="starfield">
+    <div class="bg-moon-glow"></div>
+    <div class="bg-shoot" style="top:12%; left:8%; animation-delay:1.5s;"></div>
+    <div class="bg-shoot" style="top:28%; left:55%; animation-delay:5s;"></div>
+  </div>
+  <div class="wrap">
+    <div class="hero">
+      <svg class="hero-svg" viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Siluet rasi bintang seseorang berbaring menatap langit malam">
+        <!-- scattered background stars -->
+        <g fill="#EFE6D2">
+          <circle class="hero-star" cx="60" cy="40" r="1.6" opacity="0.8"/>
+          <circle class="hero-star" cx="130" cy="90" r="1.1" opacity="0.6"/>
+          <circle class="hero-star" cx="200" cy="35" r="1.8" opacity="0.9"/>
+          <circle class="hero-star" cx="260" cy="110" r="1.2" opacity="0.5"/>
+          <circle class="hero-star" cx="90" cy="150" r="1.4" opacity="0.7"/>
+          <circle class="hero-star" cx="340" cy="55" r="1.3" opacity="0.65"/>
+          <circle class="hero-star" cx="30" cy="200" r="1.5" opacity="0.75"/>
+          <circle class="hero-star" cx="410" cy="120" r="1.1" opacity="0.55"/>
+          <circle class="hero-star" cx="470" cy="45" r="1.7" opacity="0.85"/>
+          <circle class="hero-star" cx="620" cy="30" r="1.3" opacity="0.6"/>
+          <circle class="hero-star" cx="700" cy="80" r="1.9" opacity="0.9"/>
+          <circle class="hero-star" cx="760" cy="140" r="1.2" opacity="0.55"/>
+          <circle class="hero-star" cx="820" cy="50" r="1.5" opacity="0.75"/>
+          <circle class="hero-star" cx="860" cy="110" r="1.1" opacity="0.6"/>
+          <circle class="hero-star" cx="650" cy="160" r="1.3" opacity="0.65"/>
+          <circle class="hero-star" cx="560" cy="90" r="1.4" opacity="0.7"/>
+          <circle class="hero-star" cx="150" cy="200" r="1.2" opacity="0.55"/>
+          <circle class="hero-star" cx="240" cy="170" r="1.3" opacity="0.6"/>
+          <circle class="hero-star" cx="500" cy="150" r="1.1" opacity="0.5"/>
+          <circle class="hero-star" cx="780" cy="190" r="1.4" opacity="0.7"/>
+          <circle class="hero-star" cx="20" cy="110" r="1.2" opacity="0.6"/>
+          <circle class="hero-star" cx="380" cy="180" r="1.1" opacity="0.5"/>
+        </g>
+        <!-- crescent moon -->
+        <g transform="translate(760,55)">
+          <g class="moon-float">
+            <path d="M20,0 A20,20 0 1 0 20,40 A15,17 0 1 1 20,0 Z" fill="#F1E9D8" opacity="0.9"/>
+          </g>
+        </g>
+        <!-- shooting star -->
+        <g class="shooting-star">
+          <line x1="0" y1="0" x2="34" y2="12" stroke="#F1E9D8" stroke-width="1.6" stroke-linecap="round"/>
+        </g>
+        <!-- ground hill -->
+        <path d="M0,300 L0,255 Q160,225 330,248 Q520,272 700,240 Q820,220 900,235 L900,300 Z" fill="#0a1330" opacity="0.85"/>
+        <!-- constellation figure: reclining, looking up -->
+        <g stroke="#C9A968" stroke-width="1.1" opacity="0.75">
+          <line x1="345" y1="235" x2="375" y2="248"/>
+          <line x1="375" y1="248" x2="350" y2="207"/>
+          <line x1="350" y1="207" x2="322" y2="192"/>
+          <line x1="375" y1="248" x2="495" y2="258"/>
+          <line x1="495" y1="258" x2="565" y2="232"/>
+          <line x1="565" y1="232" x2="605" y2="262"/>
+          <line x1="495" y1="258" x2="555" y2="272"/>
+        </g>
+        <g fill="#EAD9A8">
+          <circle cx="345" cy="235" r="9" />
+          <circle cx="375" cy="248" r="2.6" />
+          <circle cx="350" cy="207" r="2.4" />
+          <circle cx="322" cy="192" r="2.8" />
+          <circle cx="495" cy="258" r="2.6" />
+          <circle cx="565" cy="232" r="2.6" />
+          <circle cx="605" cy="262" r="2.8" />
+          <circle cx="555" cy="272" r="2.4" />
+        </g>
+      </svg>
+      <div class="hero-quote-wrap">
+        <p class="hero-quote-label">Kata Pembuka</p>
+        <p class="hero-quote">&ldquo;Dikala sang mentari tenggelam, rembulan akan menggantikannya untuk bersinar.&rdquo;</p>
+      </div>
+    </div>
+
+    <header class="top">
+      <div>
+        <p class="eyebrow">Untuk Kamu yang Singgah</p>
+        <h1>Suka Duka Sang Pemimpi</h1>
+        <p class="byline">oleh why_u</p>
+        <p class="count-note" id="count-note">Memuat...</p>
+        <p class="live-clock" id="live-clock"></p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" id="btn-owner-lock" title="Masuk sebagai penulis untuk menulis/mengedit">🔑 Masuk sebagai Penulis</button>
+        <button class="btn-icon" id="btn-export" title="Unduh cadangan (.json)">💾 Ekspor</button>
+        <button class="btn-icon" id="btn-print" title="Cetak / simpan sebagai PDF">🖨️ Cetak</button>
+        <button class="btn-theme" id="btn-theme-toggle">🌙 Mode Gelap</button>
+        <button class="btn-tulis" id="btn-tulis-baru">+ Tulis Puisi Baru</button>
+      </div>
+    </header>
+
+    <div id="featured-slot"></div>
+
+    <div id="fallback-notice"></div>
+    <div id="error-slot"></div>
+    <div id="content-slot">
+      <p class="loading-note">Menyiapkan lembar puisi...</p>
+    </div>
+
+    <div id="print-poems"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, doc, setDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCM7XlfwVZINqZaZjtOflaIHQtmbWdqWww",
+  authDomain: "suka-duka-pemimpi.firebaseapp.com",
+  projectId: "suka-duka-pemimpi",
+  storageBucket: "suka-duka-pemimpi.firebasestorage.app",
+  messagingSenderId: "332403941677",
+  appId: "1:332403941677:web:79ee68ab527486cd8fb3a4"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+const POEMS_COLLECTION = 'puisi';
+// Harus SAMA PERSIS dengan ownerKey di Firestore Security Rules.
+const FIRESTORE_OWNER_KEY = '14022026-kunci-rahasia';
+
+async function fsListPoems() {
+  const snap = await getDocs(collection(db, POEMS_COLLECTION));
+  const list = [];
+  snap.forEach(d => list.push(d.data()));
+  return list;
+}
+
+async function fsSetPoem(id, data) {
+  await setDoc(doc(db, POEMS_COLLECTION, id), { ...data, ownerKey: FIRESTORE_OWNER_KEY });
+}
+
+async function fsDeletePoem(id) {
+  await deleteDoc(doc(db, POEMS_COLLECTION, id));
+}
+
+(function () {
+  const memoryStore = { personal: {}, shared: {} };
+  let usingFallbackStorage = false;
+
+  function makeMemoryStorage() {
+    return {
+      async get(key, shared) {
+        const store = shared ? memoryStore.shared : memoryStore.personal;
+        if (!(key in store)) throw new Error('Kunci tidak ditemukan');
+        return { key, value: store[key], shared: !!shared };
+      },
+      async set(key, value, shared) {
+        const store = shared ? memoryStore.shared : memoryStore.personal;
+        store[key] = value;
+        return { key, value, shared: !!shared };
+      },
+      async delete(key, shared) {
+        const store = shared ? memoryStore.shared : memoryStore.personal;
+        delete store[key];
+        return { key, deleted: true, shared: !!shared };
+      },
+      async list(prefix, shared) {
+        const store = shared ? memoryStore.shared : memoryStore.personal;
+        const keys = Object.keys(store).filter(k => !prefix || k.indexOf(prefix) === 0);
+        return { keys, prefix, shared: !!shared };
+      }
+    };
+  }
+
+  function getStorage() {
+    if (window.storage && typeof window.storage.set === 'function' && typeof window.storage.get === 'function') {
+      return window.storage;
+    }
+    usingFallbackStorage = true;
+    return makeMemoryStorage();
+  }
+
+  const storage = getStorage();
+
+  const root = document.getElementById('puisi-root');
+  const contentSlot = document.getElementById('content-slot');
+  const countNote = document.getElementById('count-note');
+  const errorSlot = document.getElementById('error-slot');
+  const btnTulis = document.getElementById('btn-tulis-baru');
+  const btnTheme = document.getElementById('btn-theme-toggle');
+  const btnExport = document.getElementById('btn-export');
+  const btnOwnerLock = document.getElementById('btn-owner-lock');
+  const btnPrint = document.getElementById('btn-print');
+  const featuredSlot = document.getElementById('featured-slot');
+
+  const MOODS = {
+    netral:  { label: 'Netral',  emoji: '🕯️', color: '#A9823F', keywords: [] },
+    duka:    { label: 'Duka',    emoji: '🌧️', color: '#5B6F9E', keywords: ['duka','sedih','luka','tangis','pilu','kehilangan','patah','pedih','murung'] },
+    rindu:   { label: 'Rindu',   emoji: '🌙', color: '#8B6FA8', keywords: ['rindu','kenangan','kangen','tertinggal','sunyi'] },
+    suka:    { label: 'Suka',    emoji: '☀️', color: '#C9902E', keywords: ['suka','bahagia','cinta','syukur','gembira','tawa','riang'] },
+    harapan: { label: 'Harapan', emoji: '✨', color: '#4E8B6B', keywords: ['harap','mimpi','impian','cita','bangkit','percaya'] },
+    alam:    { label: 'Alam',    emoji: '🌊', color: '#3E8E8A', keywords: ['alam','senja','hujan','laut','langit','bintang','angin','pohon'] }
+  };
+
+  function guessMood(poem) {
+    const haystack = (((poem.tags || []).join(' ')) + ' ' + (poem.title || '') + ' ' + (poem.content || '')).toLowerCase();
+    for (const key of Object.keys(MOODS)) {
+      if (key === 'netral') continue;
+      if (MOODS[key].keywords.some(kw => haystack.includes(kw))) return key;
+    }
+    return 'netral';
+  }
+
+  function resolveMood(poem) {
+    const key = (poem.mood && MOODS[poem.mood]) ? poem.mood : guessMood(poem);
+    return { key, ...MOODS[key] };
+  }
+
+  function pickFeaturedPoem() {
+    if (poems.length === 0) return null;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const seedStr = todayStr + ':' + poems.length;
+    let hash = 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      hash = ((hash << 5) - hash + seedStr.charCodeAt(i)) | 0;
+    }
+    const index = Math.abs(hash) % poems.length;
+    return poems[index];
+  }
+
+  function renderFeatured() {
+    const poem = pickFeaturedPoem();
+    if (!poem) { featuredSlot.innerHTML = ''; return; }
+    const mood = resolveMood(poem);
+    featuredSlot.innerHTML =
+      '<div class="featured" style="--mood-color:' + mood.color + '">' +
+        '<p class="featured-label">✨ Puisi Hari Ini</p>' +
+        '<h2 class="featured-title">' + escapeHtml(poem.title || 'Tanpa Judul') + '</h2>' +
+        '<p class="featured-preview">' + escapeHtml(poem.content || '') + '</p>' +
+        '<button class="featured-btn" id="btn-featured-read">' + mood.emoji + ' Baca Selengkapnya</button>' +
+      '</div>';
+    document.getElementById('btn-featured-read').addEventListener('click', () => openReader(poem));
+  }
+
+  function downloadBackup() {
+    if (poems.length === 0) {
+      showError('Belum ada puisi untuk diekspor.');
+      return;
+    }
+    const payload = {
+      judul_kumpulan: 'Suka Duka Sang Pemimpi',
+      penulis: 'why_u',
+      diekspor_pada: new Date().toISOString(),
+      jumlah_puisi: poems.length,
+      puisi: poems
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'puisi-backup-' + dateStr + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function preparePrintView() {
+    const container = document.getElementById('print-poems');
+    let html =
+      '<div class="print-book-title">Suka Duka Sang Pemimpi</div>' +
+      '<div class="print-book-byline">oleh why_u &middot; dicetak ' + escapeHtml(formatDate(new Date().toISOString())) + '</div>';
+    poems.forEach((p, idx) => {
+      const mood = resolveMood(p);
+      const tagsLine = (p.tags || []).length ? ' &middot; ' + p.tags.map(t => escapeHtml(t)).join(', ') : '';
+      html +=
+        '<div class="print-poem">' +
+          '<div class="print-poem-num">No. ' + String(idx + 1).padStart(2, '0') + '</div>' +
+          '<div class="print-poem-title">' + escapeHtml(p.title || 'Tanpa Judul') + '</div>' +
+          '<div class="print-poem-meta">' + escapeHtml(formatDate(p.date)) + ' &middot; ' + mood.emoji + ' ' + escapeHtml(mood.label) + tagsLine + '</div>' +
+          '<div class="print-poem-body">' + escapeHtml(p.content || '') + '</div>' +
+        '</div>';
+    });
+    container.innerHTML = html;
+  }
+
+
+  const SOUND_CONFIG = {
+    netral:  { freqs: [261.63, 329.63, 392.00], wave: 'sine',     filter: 1800 },
+    duka:    { freqs: [196.00, 233.08, 293.66], wave: 'sine',     filter: 650  },
+    rindu:   { freqs: [220.00, 261.63, 329.63], wave: 'triangle', filter: 1400, arp: 'slow' },
+    suka:    { freqs: [261.63, 329.63, 392.00], wave: 'triangle', filter: 2200, arp: 'fast' },
+    harapan: { freqs: [293.66, 369.99, 440.00], wave: 'sine',     filter: 2000, rising: true },
+    alam:    { freqs: [220.00, 329.63],         wave: 'sine',     filter: 900,  noise: true }
+  };
+
+  let audioCtx = null;
+  let currentAmbient = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function stopAmbient() {
+    if (!currentAmbient) return;
+    currentAmbient.stop();
+    currentAmbient = null;
+    document.querySelectorAll('.btn-music.playing').forEach(b => {
+      b.classList.remove('playing');
+      b.querySelector('.label').textContent = 'Putar Suasana';
+    });
+  }
+
+  function startAmbient(moodKey) {
+    stopAmbient();
+    const ctx = getAudioCtx();
+    const cfg = SOUND_CONFIG[moodKey] || SOUND_CONFIG.netral;
+    const master = ctx.createGain();
+    master.gain.value = 0;
+    master.connect(ctx.destination);
+    master.gain.linearRampToValueAtTime(0.16, ctx.currentTime + 1.6);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = cfg.filter;
+    filter.connect(master);
+
+    if (cfg.rising) {
+      filter.frequency.setValueAtTime(600, ctx.currentTime);
+      filter.frequency.linearRampToValueAtTime(cfg.filter, ctx.currentTime + 8);
+    }
+
+    const nodes = [];
+    cfg.freqs.forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = cfg.wave;
+      osc.frequency.value = f;
+      const oscGain = ctx.createGain();
+      oscGain.gain.value = 0.5 / cfg.freqs.length;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.07 + i * 0.02;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 0.12;
+      lfo.connect(lfoGain);
+      lfoGain.connect(oscGain.gain);
+      osc.connect(oscGain);
+      oscGain.connect(filter);
+      osc.start();
+      lfo.start();
+      nodes.push(osc, lfo);
+    });
+
+    let noiseSrc = null;
+    if (cfg.noise) {
+      const bufferSize = 2 * ctx.sampleRate;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+      noiseSrc = ctx.createBufferSource();
+      noiseSrc.buffer = buffer;
+      noiseSrc.loop = true;
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'lowpass';
+      noiseFilter.frequency.value = 450;
+      const noiseLfo = ctx.createOscillator();
+      noiseLfo.frequency.value = 0.13;
+      const noiseLfoGain = ctx.createGain();
+      noiseLfoGain.gain.value = 220;
+      noiseLfo.connect(noiseLfoGain);
+      noiseLfoGain.connect(noiseFilter.frequency);
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.value = 0.5;
+      noiseSrc.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(master);
+      noiseSrc.start();
+      noiseLfo.start();
+      nodes.push(noiseLfo);
+    }
+
+    let arpTimer = null;
+    if (cfg.arp) {
+      const notes = cfg.freqs.concat(cfg.freqs.map(f => f * 2));
+      let idx = 0;
+      const gap = cfg.arp === 'fast' ? 520 : 1500;
+      const dur = cfg.arp === 'fast' ? 0.6 : 1.3;
+      const pluck = () => {
+        const f = notes[idx % notes.length];
+        idx++;
+        const t = ctx.currentTime;
+        const o = ctx.createOscillator();
+        o.type = 'triangle';
+        o.frequency.value = f;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.11, t + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        o.connect(g);
+        g.connect(filter);
+        o.start(t);
+        o.stop(t + dur + 0.05);
+        arpTimer = setTimeout(pluck, gap + Math.random() * 250);
+      };
+      arpTimer = setTimeout(pluck, 300);
+    }
+
+    currentAmbient = {
+      stop() {
+        const t = ctx.currentTime;
+        master.gain.cancelScheduledValues(t);
+        master.gain.setValueAtTime(master.gain.value, t);
+        master.gain.linearRampToValueAtTime(0, t + 0.5);
+        if (arpTimer) clearTimeout(arpTimer);
+        setTimeout(() => {
+          nodes.forEach(n => { try { n.stop(); } catch (e) {} });
+          if (noiseSrc) { try { noiseSrc.stop(); } catch (e) {} }
+          try { master.disconnect(); filter.disconnect(); } catch (e) {}
+        }, 600);
+      }
+    };
+  }
+
+  function applyTheme(theme) {
+    root.setAttribute('data-theme', theme);
+    btnTheme.textContent = theme === 'dark' ? '☀️ Mode Terang' : '🌙 Mode Gelap';
+  }
+
+  function buildStarfield() {
+    const el = document.getElementById('starfield');
+    if (!el || el.dataset.built) return;
+    el.dataset.built = '1';
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 90; i++) {
+      const s = document.createElement('span');
+      s.className = 'bg-star';
+      const size = (Math.random() * 1.6 + 0.6).toFixed(2);
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.left = (Math.random() * 100).toFixed(2) + '%';
+      s.style.top = (Math.random() * 100).toFixed(2) + '%';
+      s.style.opacity = (Math.random() * 0.5 + 0.35).toFixed(2);
+      s.style.animationDuration = (Math.random() * 3 + 2.5).toFixed(2) + 's';
+      s.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
+      frag.appendChild(s);
+    }
+    el.appendChild(frag);
+  }
+
+  async function initTheme() {
+    try {
+      const res = await storage.get('settings:theme', false);
+      applyTheme(res && res.value === 'dark' ? 'dark' : 'light');
+    } catch (e) {
+      applyTheme('light');
+    }
+  }
+
+  btnTheme.addEventListener('click', async () => {
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try {
+      await storage.set('settings:theme', next, false);
+    } catch (e) { /* non-fatal */ }
+  });
+
+  // Kata sandi disimpan sebagai hash SHA-256, bukan teks biasa.
+  const OWNER_PASSPHRASE_HASH = '4fa12a82a5af1a8f6def96a1de52f3f6b5f7e63445cf477dc7656fe3e3d2fa4f';
+  let editMode = false;
+
+  async function hashPassphrase(text) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  let poems = [];
+  let overlayEl = null;
+  let activeTag = null;
+  let tocOpen = true;
+  let currentReaderIndex = null;
+  let readFontScale = 1;
+  let searchQuery = '';
+
+  const PARTICLE_TYPE = {
+    netral: 'drift', duka: 'fall', rindu: 'rise', suka: 'sparkle', harapan: 'rise', alam: 'drift'
+  };
+
+  function applyFontScale(sheet) {
+    const body = sheet.querySelector('.read-body');
+    if (body) body.style.fontSize = (17 * readFontScale).toFixed(1) + 'px';
+  }
+
+  function renderMoodParticles(container, moodKey, colorHex) {
+    if (!container) return;
+    container.innerHTML = '';
+    const type = PARTICLE_TYPE[moodKey] || 'drift';
+    const count = type === 'sparkle' ? 12 : 9;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('span');
+      p.className = 'mp mp-' + type;
+      p.style.left = (Math.random() * 96).toFixed(1) + '%';
+      p.style.top = (Math.random() * 90).toFixed(1) + '%';
+      const size = (Math.random() * 3 + 2).toFixed(1);
+      p.style.setProperty('--size', size + 'px');
+      p.style.setProperty('--color', colorHex);
+      p.style.setProperty('--drift', (Math.random() * 40 - 20).toFixed(0) + 'px');
+      p.style.setProperty('--driftx', (Math.random() * 60 - 30).toFixed(0) + 'px');
+      p.style.setProperty('--drifty', (Math.random() * 60 + 30).toFixed(0) + 'px');
+      p.style.animationDuration = (Math.random() * 6 + (type === 'sparkle' ? 3 : 9)).toFixed(1) + 's';
+      p.style.animationDelay = (Math.random() * 6).toFixed(1) + 's';
+      container.appendChild(p);
+    }
+  }
+
+  function getAllTags() {
+    const set = new Set();
+    poems.forEach(p => (p.tags || []).forEach(t => set.add(t)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'id'));
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function formatDate(iso) {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function showError(msg) {
+    errorSlot.innerHTML = '<div class="error-note">' + escapeHtml(msg) + '</div>';
+    setTimeout(() => { errorSlot.innerHTML = ''; }, 8000);
+  }
+
+  async function loadPoems() {
+    contentSlot.innerHTML = '<p class="loading-note">Menyiapkan lembar puisi...</p>';
+    try {
+      const loaded = await fsListPoems();
+      loaded.sort((a, b) => new Date(a.date) - new Date(b.date));
+      poems = loaded;
+      render();
+    } catch (e) {
+      contentSlot.innerHTML = '';
+      console.error('Gagal memuat puisi dari Firebase:', e);
+      showError('Gagal memuat puisi: ' + (e && e.message ? e.message : 'periksa koneksi atau aturan Firestore.'));
+      countNote.textContent = '';
+    }
+  }
+
+  function computeStats() {
+    const total = poems.length;
+    const moodCounts = {};
+    poems.forEach(p => { const m = resolveMood(p).key; moodCounts[m] = (moodCounts[m] || 0) + 1; });
+    let topMood = null, topMoodCount = 0;
+    Object.keys(moodCounts).forEach(k => { if (moodCounts[k] > topMoodCount) { topMood = k; topMoodCount = moodCounts[k]; } });
+    const monthCounts = {};
+    poems.forEach(p => {
+      const d = new Date(p.date);
+      if (isNaN(d)) return;
+      const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      monthCounts[key] = (monthCounts[key] || 0) + 1;
+    });
+    let topMonth = null, topMonthCount = 0;
+    Object.keys(monthCounts).forEach(k => { if (monthCounts[k] > topMonthCount) { topMonth = k; topMonthCount = monthCounts[k]; } });
+    let topMonthLabel = '—';
+    if (topMonth) {
+      const [y, m] = topMonth.split('-');
+      const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+      topMonthLabel = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    }
+    return { total, topMood: topMood ? MOODS[topMood] : null, topMonthLabel, moodCounts };
+  }
+
+  function buildMoodDonut(moodCounts, total) {
+    const r = 46;
+    const circumference = 2 * Math.PI * r;
+    let cum = 0;
+    let circles = '';
+    let legend = '';
+    Object.keys(MOODS).forEach(key => {
+      const count = moodCounts[key] || 0;
+      if (count === 0) return;
+      const frac = count / total;
+      const len = frac * circumference;
+      circles += '<circle cx="60" cy="60" r="' + r + '" fill="none" stroke="' + MOODS[key].color +
+        '" stroke-width="15" stroke-dasharray="' + len.toFixed(2) + ' ' + (circumference - len).toFixed(2) +
+        '" stroke-dashoffset="' + (-cum).toFixed(2) + '" transform="rotate(-90 60 60)" class="donut-seg" />';
+      cum += len;
+      const pct = Math.round(frac * 100);
+      legend += '<div class="donut-legend-row"><span class="donut-dot" style="background:' + MOODS[key].color + '"></span>' +
+        '<span class="donut-legend-label">' + MOODS[key].emoji + ' ' + escapeHtml(MOODS[key].label) + '</span>' +
+        '<span class="donut-legend-pct">' + pct + '%</span></div>';
+    });
+    return (
+      '<div class="mood-donut-card">' +
+        '<svg viewBox="0 0 120 120" class="donut-svg">' +
+          '<circle cx="60" cy="60" r="' + r + '" fill="none" stroke="var(--rule)" stroke-width="15" />' +
+          circles +
+          '<text x="60" y="56" text-anchor="middle" class="donut-center-num">' + total + '</text>' +
+          '<text x="60" y="72" text-anchor="middle" class="donut-center-label">PUISI</text>' +
+        '</svg>' +
+        '<div class="donut-legend">' + legend + '</div>' +
+      '</div>'
+    );
+  }
+
+  let searchFocused = false;
+
+  function render() {
+    countNote.textContent = poems.length === 0
+      ? 'Belum ada puisi tersimpan'
+      : poems.length + (poems.length === 1 ? ' puisi tersimpan' : ' puisi tersimpan');
+
+    if (poems.length === 0) {
+      contentSlot.innerHTML = editMode
+        ? '<div class="empty">' +
+            '<p class="lead">Lembar pertama masih kosong.</p>' +
+            '<p class="sub">Tuangkan suka duka sang pemimpi di sini.</p>' +
+            '<button class="btn-tulis" id="btn-empty-tulis">+ Tulis Puisi Baru</button>' +
+          '</div>'
+        : '<div class="empty">' +
+            '<p class="lead">Belum ada puisi yang dibagikan.</p>' +
+            '<p class="sub">Nantikan tulisan dari why_u.</p>' +
+          '</div>';
+      const emptyBtn = document.getElementById('btn-empty-tulis');
+      if (emptyBtn) emptyBtn.addEventListener('click', () => openForm());
+      featuredSlot.innerHTML = '';
+      return;
+    }
+
+    contentSlot.innerHTML = '';
+    renderFeatured();
+    const stats = computeStats();
+    const statsBar = document.createElement('div');
+    statsBar.className = 'stats-bar';
+    statsBar.innerHTML =
+      '<div class="stat-chip"><div class="stat-value">' + stats.total + '</div><div class="stat-label">Total Puisi</div></div>' +
+      '<div class="stat-chip"><div class="stat-value">' + (stats.topMood ? stats.topMood.emoji + ' ' + escapeHtml(stats.topMood.label) : '—') + '</div><div class="stat-label">Suasana Terbanyak</div></div>' +
+      '<div class="stat-chip"><div class="stat-value">' + escapeHtml(stats.topMonthLabel) + '</div><div class="stat-label">Bulan Paling Produktif</div></div>';
+    contentSlot.appendChild(statsBar);
+
+    const donutWrap = document.createElement('div');
+    donutWrap.innerHTML = buildMoodDonut(stats.moodCounts, stats.total);
+    contentSlot.appendChild(donutWrap.firstElementChild);
+
+    const searchRow = document.createElement('div');
+    searchRow.className = 'search-row';
+    searchRow.innerHTML = '<input type="text" class="search-input" id="search-input" placeholder="Cari judul atau isi puisi..." value="' + escapeHtml(searchQuery) + '" />';
+    contentSlot.appendChild(searchRow);
+    const searchInput = searchRow.querySelector('#search-input');
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value;
+      searchFocused = true;
+      render();
+    });
+    searchInput.addEventListener('blur', () => { searchFocused = false; });
+    if (searchFocused) {
+      searchInput.focus();
+      const pos = searchInput.value.length;
+      searchInput.setSelectionRange(pos, pos);
+    }
+
+    let visiblePoemsAll = activeTag ? poems.filter(p => (p.tags || []).includes(activeTag)) : poems.slice();
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      visiblePoemsAll = visiblePoemsAll.filter(p =>
+        (p.title || '').toLowerCase().includes(q) || (p.content || '').toLowerCase().includes(q)
+      );
+    }
+
+    const toc = document.createElement('div');
+    toc.className = 'toc';
+    const tocHeader = document.createElement('div');
+    tocHeader.className = 'toc-header';
+    tocHeader.innerHTML =
+      '<p class="toc-label">Daftar Judul (' + visiblePoemsAll.length + ')</p>' +
+      '<button class="toc-toggle">' + (tocOpen ? 'Sembunyikan ▲' : 'Tampilkan ▼') + '</button>';
+    toc.appendChild(tocHeader);
+    if (tocOpen) {
+      const list = document.createElement('ol');
+      list.className = 'toc-list';
+      visiblePoemsAll.forEach(p => {
+        const num = poems.findIndex(x => x.id === p.id) + 1;
+        const item = document.createElement('button');
+        item.className = 'toc-item';
+        item.innerHTML =
+          '<span class="toc-num">' + String(num).padStart(2, '0') + '</span>' +
+          '<span class="toc-title">' + escapeHtml(p.title || 'Tanpa Judul') + '</span>' +
+          '<span class="toc-date">' + escapeHtml(formatDate(p.date)) + '</span>';
+        item.addEventListener('click', () => openReader(p));
+        list.appendChild(item);
+      });
+      toc.appendChild(list);
+    }
+    tocHeader.addEventListener('click', () => { tocOpen = !tocOpen; render(); });
+    contentSlot.appendChild(toc);
+
+    const allTags = getAllTags();
+    if (allTags.length > 0) {
+      const bar = document.createElement('div');
+      bar.className = 'filter-bar';
+      const allPill = document.createElement('button');
+      allPill.className = 'filter-pill' + (activeTag === null ? ' active' : '');
+      allPill.textContent = 'Semua';
+      allPill.addEventListener('click', () => { activeTag = null; render(); });
+      bar.appendChild(allPill);
+      allTags.forEach(tag => {
+        const pill = document.createElement('button');
+        pill.className = 'filter-pill' + (activeTag === tag ? ' active' : '');
+        pill.textContent = tag;
+        pill.addEventListener('click', () => { activeTag = tag; render(); });
+        bar.appendChild(pill);
+      });
+      contentSlot.appendChild(bar);
+    }
+
+    const visiblePoems = visiblePoemsAll;
+
+    if (visiblePoems.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = q
+        ? '<p class="lead">Tak ada puisi yang cocok.</p><p class="sub">Coba kata kunci lain.</p>'
+        : '<p class="lead">Tak ada puisi dengan tag ini.</p><p class="sub">Coba pilih tag lain.</p>';
+      contentSlot.appendChild(empty);
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    visiblePoems.forEach((p, i) => {
+      const idx = poems.findIndex(x => x.id === p.id);
+      const cardAnim = document.createElement('div');
+      cardAnim.className = 'card-anim';
+      cardAnim.style.animationDelay = Math.min(i * 0.05, 0.4) + 's';
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      const mood = resolveMood(p);
+      card.style.setProperty('--mood-color', mood.color);
+      const num = String(idx + 1).padStart(2, '0');
+      const tagsHtml = (p.tags || []).length
+        ? '<div class="tag-row">' + p.tags.map(t => '<span class="tag-pill">' + escapeHtml(t) + '</span>').join('') + '</div>'
+        : '';
+      card.innerHTML =
+        '<div class="card-num">No. ' + num + '</div>' +
+        '<div class="mood-pill">' + mood.emoji + ' ' + escapeHtml(mood.label) + '</div>' +
+        '<h3 class="card-title">' + escapeHtml(p.title || 'Tanpa Judul') + '</h3>' +
+        tagsHtml +
+        '<div class="card-preview">' + escapeHtml(p.content || '') + '</div>' +
+        '<div class="card-date">Ditulis ' + escapeHtml(formatDate(p.date)) + '</div>' +
+        '<div class="card-updated">Diperbarui ' + escapeHtml(formatDate(p.updatedAt || p.date)) + '</div>';
+      card.addEventListener('click', () => openReader(p));
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openReader(p); }
+      });
+      cardAnim.appendChild(card);
+      grid.appendChild(cardAnim);
+    });
+
+    contentSlot.appendChild(grid);
+  }
+
+  function closeOverlay() {
+    if (!overlayEl) return;
+    stopAmbient();
+    currentReaderIndex = null;
+    const el = overlayEl;
+    overlayEl = null;
+    el.classList.add('closing');
+    setTimeout(() => { el.remove(); }, 170);
+    document.removeEventListener('keydown', escListener);
+  }
+
+  function escListener(e) {
+    if (e.key === 'Escape') { closeOverlay(); return; }
+    if (currentReaderIndex === null) return;
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (e.key === 'ArrowLeft') navigateReader(-1);
+    if (e.key === 'ArrowRight') navigateReader(1);
+  }
+
+  function applySheetMood(sheet, colorHex) {
+    sheet.style.backgroundColor = 'var(--paper)';
+    sheet.style.backgroundImage =
+      'radial-gradient(ellipse 150% 60% at 50% -20%, color-mix(in srgb, ' + colorHex + ' 24%, transparent) 0%, transparent 68%),' +
+      'repeating-linear-gradient(to bottom, transparent, transparent 30px, var(--rule) 31px)';
+  }
+
+  function openOverlayShell(innerHtml) {
+    closeOverlay();
+    overlayEl = document.createElement('div');
+    overlayEl.className = 'overlay';
+    overlayEl.innerHTML = '<div class="sheet">' +
+      '<button class="sheet-close" aria-label="Tutup">✕ Tutup</button>' +
+      innerHtml +
+      '</div>';
+    overlayEl.addEventListener('click', (e) => {
+      if (e.target === overlayEl) closeOverlay();
+    });
+    overlayEl.querySelector('.sheet-close').addEventListener('click', closeOverlay);
+    root.appendChild(overlayEl);
+    document.addEventListener('keydown', escListener);
+    return overlayEl.querySelector('.sheet');
+  }
+
+  function openReader(poem) {
+    const mood = resolveMood(poem);
+    const idx = poems.findIndex(p => p.id === poem.id);
+    currentReaderIndex = idx;
+    const tagsHtml = (poem.tags || []).length
+      ? '<div class="tag-row">' + poem.tags.map(t => '<span class="tag-pill">' + escapeHtml(t) + '</span>').join('') + '</div>'
+      : '';
+    const updatedLine = (poem.updatedAt && poem.updatedAt !== poem.date)
+      ? ' &middot; Diperbarui ' + escapeHtml(formatDate(poem.updatedAt))
+      : '';
+    const atStart = idx <= 0;
+    const atEnd = idx >= poems.length - 1;
+    const sheet = openOverlayShell(
+      '<div class="mood-particles" id="mood-particles"></div>' +
+      '<div class="read-nav">' +
+        '<button class="nav-arrow" id="btn-prev-poem" ' + (atStart ? 'disabled' : '') + ' aria-label="Puisi sebelumnya">&larr;</button>' +
+        '<span class="nav-position">' + (idx + 1) + ' / ' + poems.length + '</span>' +
+        '<button class="nav-arrow" id="btn-next-poem" ' + (atEnd ? 'disabled' : '') + ' aria-label="Puisi berikutnya">&rarr;</button>' +
+      '</div>' +
+      '<div class="read-num">No. ' + escapeHtml(String(idx + 1).padStart(2,'0')) + '</div>' +
+      '<h2 class="read-title">' + escapeHtml(poem.title || 'Tanpa Judul') + '</h2>' +
+      '<div class="read-date">Ditulis ' + escapeHtml(formatDate(poem.date)) + updatedLine + '</div>' +
+      '<div class="read-controls">' +
+        '<div class="read-mood" style="--mood-color:' + mood.color + '">' + mood.emoji + ' ' + escapeHtml(mood.label) + '</div>' +
+        '<button class="btn-music" id="btn-music" style="--mood-color:' + mood.color + '"><span class="dot"></span><span class="label">Putar Suasana</span></button>' +
+        '<div class="fs-group">' +
+          '<span class="fs-label">Aa</span>' +
+          '<button class="fs-btn" id="fs-minus" aria-label="Perkecil huruf">−</button>' +
+          '<button class="fs-btn" id="fs-plus" aria-label="Perbesar huruf">+</button>' +
+        '</div>' +
+      '</div>' +
+      tagsHtml +
+      '<div class="read-body">' + escapeHtml(poem.content || '') + '</div>' +
+      '<div class="read-actions">' +
+        (editMode
+          ? '<button class="btn-edit" id="btn-do-edit">Sunting</button><button class="btn-hapus" id="btn-do-hapus">Hapus</button>'
+          : '<span class="read-viewer-note">🕊️ Dibagikan oleh why_u untuk dibaca</span>') +
+      '</div>'
+    );
+    const editBtn = sheet.querySelector('#btn-do-edit');
+    const hapusBtn = sheet.querySelector('#btn-do-hapus');
+    if (editBtn) editBtn.addEventListener('click', () => openForm(poem));
+    if (hapusBtn) hapusBtn.addEventListener('click', () => confirmDelete(poem));
+    applySheetMood(sheet, mood.color);
+    applyFontScale(sheet);
+    renderMoodParticles(sheet.querySelector('#mood-particles'), mood.key, mood.color);
+
+    const prevBtn = sheet.querySelector('#btn-prev-poem');
+    const nextBtn = sheet.querySelector('#btn-next-poem');
+    prevBtn.addEventListener('click', () => navigateReader(-1));
+    nextBtn.addEventListener('click', () => navigateReader(1));
+
+    sheet.querySelector('#fs-minus').addEventListener('click', () => {
+      readFontScale = Math.max(0.8, +(readFontScale - 0.1).toFixed(2));
+      applyFontScale(sheet);
+    });
+    sheet.querySelector('#fs-plus').addEventListener('click', () => {
+      readFontScale = Math.min(1.6, +(readFontScale + 0.1).toFixed(2));
+      applyFontScale(sheet);
+    });
+
+    const musicBtn = sheet.querySelector('#btn-music');
+    musicBtn.addEventListener('click', () => {
+      if (currentAmbient) {
+        stopAmbient();
+      } else {
+        try {
+          startAmbient(mood.key);
+          musicBtn.classList.add('playing');
+          musicBtn.querySelector('.label').textContent = 'Hentikan Musik';
+        } catch (e) {
+          showError('Browser ini tidak mendukung audio ambient.');
+        }
+      }
+    });
+  }
+
+  function navigateReader(delta) {
+    if (currentReaderIndex === null) return;
+    const newIndex = currentReaderIndex + delta;
+    if (newIndex < 0 || newIndex >= poems.length) return;
+    openReader(poems[newIndex]);
+  }
+
+  function confirmDelete(poem) {
+    const sheet = overlayEl.querySelector('.sheet');
+    const actions = sheet.querySelector('.read-actions');
+    actions.innerHTML =
+      '<span style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--ink-soft);align-self:center;">Hapus puisi ini secara permanen?</span>' +
+      '<button class="btn-hapus" id="btn-confirm-hapus" style="border-color:var(--wine);color:var(--wine);">Ya, Hapus</button>' +
+      '<button class="btn-edit" id="btn-cancel-hapus">Batal</button>';
+    sheet.querySelector('#btn-confirm-hapus').addEventListener('click', () => doDelete(poem));
+    sheet.querySelector('#btn-cancel-hapus').addEventListener('click', () => openReader(poem));
+  }
+
+  async function doDelete(poem) {
+    try {
+      await fsDeletePoem(poem.id);
+      closeOverlay();
+      await loadPoems();
+    } catch (e) {
+      console.error('Gagal menghapus puisi:', e);
+      showError('Gagal menghapus puisi: ' + (e && e.message ? e.message : 'periksa aturan Firestore.'));
+    }
+  }
+
+  function openForm(existing) {
+    currentReaderIndex = null;
+    const isEdit = !!existing;
+    const draftKey = 'draft:' + (existing ? existing.id : 'new');
+    const initialMoodKey = existing ? (existing.mood || guessMood(existing)) : 'netral';
+    const moodOptionsHtml = Object.keys(MOODS).map(key =>
+      '<option value="' + key + '"' + (key === initialMoodKey ? ' selected' : '') + '>' +
+      MOODS[key].emoji + ' ' + MOODS[key].label + '</option>'
+    ).join('');
+    const sheet = openOverlayShell(
+      '<div id="draft-banner-slot"></div>' +
+      '<span class="field-label">Judul</span>' +
+      '<input type="text" class="title-input" id="input-title" placeholder="Judul puisi..." value="' + (existing ? escapeHtml(existing.title) : '') + '" />' +
+      '<span class="field-label">Isi Puisi</span>' +
+      '<textarea class="body-input" id="input-body" placeholder="Tulis puisimu di sini...">' + (existing ? escapeHtml(existing.content) : '') + '</textarea>' +
+      '<span class="field-label">Tag (pisahkan dengan koma)</span>' +
+      '<input type="text" class="tag-input" id="input-tags" placeholder="suka, duka, rindu..." value="' + (existing && existing.tags ? escapeHtml(existing.tags.join(', ')) : '') + '" />' +
+      '<span class="field-label">Suasana Latar</span>' +
+      '<div class="mood-select-row">' +
+        '<select class="mood-select" id="input-mood">' + moodOptionsHtml + '</select>' +
+        '<button type="button" class="btn-ai-mood" id="btn-ai-mood">✨ Biar AI Pilih</button>' +
+      '</div>' +
+      '<div class="sheet-actions">' +
+        '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--ink-soft);">' + (isEdit ? 'Menyunting puisi' : 'Puisi baru') + '</span>' +
+        '<button class="btn-simpan" id="btn-simpan">Simpan Puisi</button>' +
+      '</div>'
+    );
+
+    const titleInput = sheet.querySelector('#input-title');
+    const bodyInput = sheet.querySelector('#input-body');
+    const tagsInput = sheet.querySelector('#input-tags');
+    const moodSelect = sheet.querySelector('#input-mood');
+    const aiMoodBtn = sheet.querySelector('#btn-ai-mood');
+    const saveBtn = sheet.querySelector('#btn-simpan');
+    titleInput.focus();
+    applySheetMood(sheet, MOODS[initialMoodKey].color);
+
+    let moodTouchedByUser = false;
+
+    function showDraftBanner(draft) {
+      const slot = sheet.querySelector('#draft-banner-slot');
+      if (!slot) return;
+      const savedTime = draft.savedAt
+        ? new Date(draft.savedAt).toLocaleString('id-ID', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
+        : '';
+      slot.innerHTML =
+        '<div class="draft-banner">' +
+          '<span>📝 Ada draf tersimpan otomatis' + (savedTime ? ' (' + escapeHtml(savedTime) + ')' : '') + '</span>' +
+          '<div class="draft-banner-actions">' +
+            '<button class="draft-btn" id="btn-use-draft">Gunakan Draf</button>' +
+            '<button class="draft-btn subtle" id="btn-discard-draft">Abaikan</button>' +
+          '</div>' +
+        '</div>';
+      slot.querySelector('#btn-use-draft').addEventListener('click', () => {
+        titleInput.value = draft.title || '';
+        bodyInput.value = draft.content || '';
+        tagsInput.value = (draft.tags || []).join(', ');
+        if (draft.mood && MOODS[draft.mood]) {
+          moodSelect.value = draft.mood;
+          moodTouchedByUser = true;
+          applySheetMood(sheet, MOODS[draft.mood].color);
+        }
+        slot.innerHTML = '';
+      });
+      slot.querySelector('#btn-discard-draft').addEventListener('click', async () => {
+        try { await storage.delete(draftKey, false); } catch (e) { /* ignore */ }
+        slot.innerHTML = '';
+      });
+    }
+
+    (async () => {
+      try {
+        const res = await storage.get(draftKey, false);
+        if (!res || !res.value) return;
+        const draft = JSON.parse(res.value);
+        const sameAsCurrent = (draft.title || '') === (existing ? existing.title : '') &&
+          (draft.content || '') === (existing ? existing.content : '');
+        if (sameAsCurrent || (!draft.title && !draft.content)) return;
+        showDraftBanner(draft);
+      } catch (e) { /* no draft yet, ignore */ }
+    })();
+
+    let draftSaveTimer = null;
+    function scheduleDraftSave() {
+      clearTimeout(draftSaveTimer);
+      draftSaveTimer = setTimeout(async () => {
+        const draft = {
+          title: titleInput.value.trim(),
+          content: bodyInput.value.trim(),
+          tags: tagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
+          mood: moodSelect.value,
+          savedAt: new Date().toISOString()
+        };
+        if (!draft.title && !draft.content) return;
+        try { await storage.set(draftKey, JSON.stringify(draft), false); } catch (e) { /* silent */ }
+      }, 900);
+    }
+    titleInput.addEventListener('input', scheduleDraftSave);
+    bodyInput.addEventListener('input', scheduleDraftSave);
+    tagsInput.addEventListener('input', scheduleDraftSave);
+
+    moodSelect.addEventListener('change', () => {
+      moodTouchedByUser = true;
+      applySheetMood(sheet, MOODS[moodSelect.value].color);
+    });
+    tagsInput.addEventListener('blur', () => {
+      if (moodTouchedByUser) return;
+      const guessed = guessMood({ tags: tagsInput.value.split(',').map(t => t.trim()).filter(Boolean), title: titleInput.value, content: bodyInput.value });
+      moodSelect.value = guessed;
+      applySheetMood(sheet, MOODS[guessed].color);
+    });
+
+    aiMoodBtn.addEventListener('click', async () => {
+      const content = bodyInput.value.trim();
+      if (!content) {
+        showError('Tulis isi puisinya dulu sebelum meminta AI memilih suasana.');
+        return;
+      }
+      aiMoodBtn.disabled = true;
+      aiMoodBtn.textContent = 'Membaca puisi...';
+      try {
+        const allowedKeys = Object.keys(MOODS);
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 20,
+            system: 'Kamu mengklasifikasikan suasana puisi Bahasa Indonesia. Balas HANYA dengan salah satu kata ini, tanpa tanda baca atau penjelasan: ' + allowedKeys.join(', ') + '.',
+            messages: [{ role: 'user', content: 'Judul: ' + (titleInput.value || '(tanpa judul)') + '\n\nIsi puisi:\n' + content }]
+          })
+        });
+        const data = await response.json();
+        const text = (data.content || []).map(b => b.text || '').join('').trim().toLowerCase();
+        const matched = allowedKeys.find(k => text.includes(k));
+        if (matched) {
+          moodSelect.value = matched;
+          moodTouchedByUser = true;
+          applySheetMood(sheet, MOODS[matched].color);
+        } else {
+          showError('AI tidak yakin dengan suasananya, coba pilih manual.');
+        }
+      } catch (e) {
+        showError('Gagal menghubungi AI. Coba pilih suasana secara manual.');
+      } finally {
+        aiMoodBtn.disabled = false;
+        aiMoodBtn.textContent = '✨ Biar AI Pilih';
+      }
+    });
+
+    saveBtn.addEventListener('click', async () => {
+      const title = titleInput.value.trim();
+      const content = bodyInput.value.trim();
+      if (!title && !content) {
+        showError('Isi judul atau puisi dulu sebelum menyimpan.');
+        return;
+      }
+      const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Menyimpan...';
+      const record = {
+        id: existing ? existing.id : (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)),
+        title: title || 'Tanpa Judul',
+        content: content,
+        tags: tags,
+        mood: moodSelect.value,
+        date: existing ? existing.date : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      try {
+        await fsSetPoem(record.id, record);
+        try { await storage.delete(draftKey, false); } catch (e) { /* non-fatal */ }
+        closeOverlay();
+        await loadPoems();
+      } catch (e) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Simpan Puisi';
+        console.error('Gagal menyimpan puisi:', e);
+        showError('Gagal menyimpan puisi: ' + (e && e.message ? e.message : 'kesalahan tidak diketahui') + '. Draf kamu tetap tersimpan otomatis, coba klik Simpan lagi.');
+      }
+    });
+  }
+
+  btnTulis.addEventListener('click', () => openForm());
+  btnExport.addEventListener('click', () => downloadBackup());
+  btnPrint.addEventListener('click', () => {
+    if (poems.length === 0) {
+      showError('Belum ada puisi untuk dicetak.');
+      return;
+    }
+    preparePrintView();
+    setTimeout(() => window.print(), 80);
+  });
+
+  function updateOwnerUI() {
+    btnTulis.style.display = editMode ? '' : 'none';
+    btnOwnerLock.textContent = editMode ? '🔓 Mode Penulis Aktif' : '🔑 Masuk sebagai Penulis';
+    btnOwnerLock.classList.toggle('active', editMode);
+  }
+
+  btnOwnerLock.addEventListener('click', async () => {
+    if (editMode) {
+      editMode = false;
+      updateOwnerUI();
+      return;
+    }
+    const pass = window.prompt('Masukkan kata sandi penulis untuk menulis, menyunting, atau menghapus puisi:');
+    if (pass === null) return;
+    try {
+      const enteredHash = await hashPassphrase(pass);
+      if (enteredHash === OWNER_PASSPHRASE_HASH) {
+        editMode = true;
+        updateOwnerUI();
+      } else {
+        showError('Kata sandi salah. Kamu tetap bisa membaca semua puisi.');
+      }
+    } catch (e) {
+      showError('Browser ini tidak mendukung verifikasi kata sandi.');
+    }
+  });
+
+  function updateClock() {
+    const el = document.getElementById('live-clock');
+    if (!el) return;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    el.textContent = dateStr + ' · ' + timeStr;
+  }
+
+  updateOwnerUI();
+  updateClock();
+  setInterval(updateClock, 1000);
+  initTheme();
+  buildStarfield();
+  if (usingFallbackStorage) {
+    const fb = document.getElementById('fallback-notice');
+    if (fb) {
+      fb.innerHTML =
+        '<div class="draft-banner">' +
+          '<span>ℹ️ Preferensi tema & draf otomatis tidak tersimpan permanen di tampilan ini (cuma berlaku selama sesi ini). Tenang, puisi kamu tetap aman — sudah tersimpan permanen lewat Firebase.</span>' +
+        '</div>';
+    }
+  }
+  loadPoems();
+})();
+</script>
